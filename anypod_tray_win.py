@@ -311,7 +311,7 @@ def sync():#同步函数
 def close():#Pyinstaller打包的EXE无法调用exit()
     global icon,pwin
     pwin.destroy()
-    icon=0
+    icon.stop()
     synct=0
     #sys.exit()
 
@@ -344,7 +344,7 @@ pwin.withdraw()
 
 #托盘
 use_color_icon=False
-menu = (pystray.MenuItem('显示进度',show_window,default=True),pystray.MenuItem('退出',close),pystray.MenuItem('添加新设备',lambda:os.system('newdevice.py')))
+menu = (pystray.MenuItem('显示进度',show_window,default=True),pystray.MenuItem('退出',close),pystray.MenuItem('添加新设备',lambda:os.system('newdevice.exe')))
 iconimg = Image.open("icon.png")
 icon = pystray.Icon("AnyPod",iconimg,"AnyPod",menu)
 icon.run_detached()
