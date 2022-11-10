@@ -77,6 +77,8 @@ def rename():
 #toaster.show_toast('程序仍在工作','请勿惊慌，程序仍在后台工作！',threaded=True)
 def favdown(path):
     global usr,pwd,pga,pgb,pgc,pwin,filename,e_name,rwin
+    if not bool(os.path.exists(path)):
+        os.makedirs(path)
     try:
         pwin.overrideredirect(True)
         pwin.attributes('-topmost',True)
@@ -140,6 +142,8 @@ def favdown(path):
             favarlst.append([])
             for ar in song['ar']:
                 favarlst[json['songs'].index(song)].append(ar['name'])
+
+        flst=[]#Fail List，用于存储失败的歌曲
 
         for mid in favlst:
             rpg('正在下载（'+str(favlst.index(mid)+1)+'/'+str(len(favlst))+'）',favnamelst[favlst.index(mid)],(favlst.index(mid)/len(favlst))*100)
@@ -205,36 +209,43 @@ def favdown(path):
                         f.write(m)
                         f.close()
                         #编辑信息
-                        ars=''
-                        for i in favarlst[favlst.index(mid)]:
-                            ars+=i+';'
-                        ars=ars[0:len(ars)-1]
-                        #infres=requests.get(url="https://cloudmusic-api.txm.world/song/detail?ids="+mid)
-                        #infjson=infres.json()
-                        #inf=infjson['songs'][0]
-                        audiofile = eyed3.load(path+filename+".mp3")
-                        audiofile.initTag()
-                        audiofile.tag.title = favnamelst[favlst.index(mid)]
-                        audiofile.tag.artist = ars
-                        audiofile.tag.album = favallst[favlst.index(mid)]
-                        #audiofile.tag.images.set(type_=3,img_data=img,mime_type='image/jpeg')  # 封面，但是用不了
-                        #audiofile.tag.recording_date = str(pubyear)  # 年份，但是去掉可以省很多事
-                        audiofile.tag.save()
+                        try:
+                            ars=''
+                            for i in favarlst[favlst.index(mid)]:
+                                ars+=i+';'
+                            ars=ars[0:len(ars)-1]
+                            #infres=requests.get(url="https://cloudmusic-api.txm.world/song/detail?ids="+mid)
+                            #infjson=infres.json()
+                            #inf=infjson['songs'][0]
+                            audiofile = eyed3.load(path+filename+".mp3")
+                            audiofile.initTag()
+                            audiofile.tag.title = favnamelst[favlst.index(mid)]
+                            audiofile.tag.artist = ars
+                            audiofile.tag.album = favallst[favlst.index(mid)]
+                            #audiofile.tag.images.set(type_=3,img_data=img,mime_type='image/jpeg')  # 封面，但是用不了
+                            #audiofile.tag.recording_date = str(pubyear)  # 年份，但是去掉可以省很多事
+                            audiofile.tag.save()
+                        except Exception as e:
+                            pga['text']='歌曲信息未填入'
+                            pwin.update()
+                            time.sleep(5)
+                            pwin.update()
                 except Exception as e:
                     #toaster.show_toast('可接受的错误','下载 '+favnamelst[favlst.index(mid)]+' 时遇到错误，将跳过本音乐\n\n'+str(e),duration=10)
                     print(str(e))
                     pga['text']='下载错误 将跳过'
-                    icon.notify('下载错误，将跳过 '+favnamelst[favlst.index(mid)],title='可接受的错误')
                     pwin.update()
                     time.sleep(5)
                     pwin.update()
+                    flst.append(mid)
 
         pga['text']='下载完成！'
         pgb['text']='恭喜！全部音乐下载完成！'
-        icon.notify('恭喜！全部音乐下载完成！',title='下载完成！')
+        icon.notify('恭喜！全部音乐下载完成！\n\n成功 '+str(len(favlst)-len(flst))+' 首\n失败 '+str(len(flst))+' 首',title='下载完成！')
         pwin.update()
 
     except Exception as e:
+        icon.notify('无法同步到路径 '+path+'\n\n错误：\n'+str(e),title='同步失败')
         try:
             pwin.configure(background='#FF9090')
             pga['bg']='#FF9090'
@@ -311,7 +322,7 @@ def sync():#同步函数
 def close():#Pyinstaller打包的EXE无法调用exit()
     global icon,pwin
     pwin.destroy()
-    icon.stop()
+    icon=0
     synct=0
     #sys.exit()
 
